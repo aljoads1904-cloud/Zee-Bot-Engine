@@ -20,7 +20,16 @@ def send_typing(chat_id: int | str, duration: float = TYPING_DELAY_SECS):
     time.sleep(duration)
 
 
-def send_message(chat_id: int | str, text: str, parse_mode: str = "Markdown",
+def _escape_markdown(text: str) -> str:
+    """Escape special chars for Telegram's legacy Markdown to prevent parse errors."""
+    # Escape underscores that aren't part of *bold* or _italic_ intentional formatting
+    # Safest fix: switch all unintentional underscores in plain words
+    import re
+    # Only escape underscores NOT surrounded by spaces (i.e., in usernames/words)
+    return re.sub(r'(?<!\*)\b_\b(?!\*)', r'\\_', text)
+
+
+def send_message(chat_id: int | str, text: str, parse_mode: str = "HTML",
                  reply_markup: dict = None, typing: bool = True) -> dict:
     """
     Send a message with an optional 3-second typing indicator first.

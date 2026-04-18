@@ -212,13 +212,18 @@ def get_leads_needing_nudge(hours: int = 2) -> list[dict]:
 
 
 def log_followup(telegram_id: str, name: str, day: int, message: str):
-    """Append an entry to the FollowUpLog tab."""
-    row = [[
-        str(telegram_id), name, str(day), message, now_ts(), "no"
-    ]]
-    with get_client() as client:
-        client.call_tool("gsheets__append-values", {
-            "spreadsheet_url": SHEET_URL,
-            "range": f"Sheet1!A1",   # fallback to Sheet1 since FollowUpLog tab not created
-            "values": row
-        })
+    """
+    Log a follow-up event by adding a note to the lead's 'notes' column.
+    (FollowUpLog tab not available — single-tab fallback)
+    """
+    try:
+        lead = find_lead(telegram_id)
+        if not lead:
+            return
+        existing_notes = lead.get("notes", "") or ""
+        ts = now_ts()
+        new_note = f"[Day {day} @ {ts[:10]}]: {message[:60]}"
+        combined = f"{existing_notes} | {new_note}" if existing_notes else new_note
+        update_lead(telegram_id, {"notes": combined[-500:]})  # keep last 500 chars
+    except Exception:
+        pass  # log_followup is non-critical — never crash the main flow

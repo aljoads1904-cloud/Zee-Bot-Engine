@@ -16,6 +16,7 @@ import os
 import sys
 import json
 import logging
+import threading
 from flask import Flask, request, jsonify
 
 # Ensure local imports work
@@ -34,6 +35,14 @@ logger = logging.getLogger("zee_bot")
 
 # ─── FLASK APP ────────────────────────────────────────────────
 app = Flask(__name__)
+
+
+def _safe_process(chat_id, username, text):
+    """Wrapper to catch exceptions in background threads."""
+    try:
+        process_message(chat_id, username, text)
+    except Exception as e:
+        logger.exception(f"Background process_message error for {chat_id}: {e}")
 
 
 @app.route("/", methods=["GET"])
@@ -62,7 +71,10 @@ def webhook():
                 return jsonify({"ok": True})  # ignore non-text (photos etc.)
 
             logger.info(f"MSG from {chat_id} (@{username}): {text[:80]}")
-            process_message(chat_id, username, text)
+            # FIX: Background thread avoids Telegram's 5s webhook timeout
+            threading.Thread(
+                target=_safe_process, args=(chat_id, username, text), daemon=True
+            ).start()
 
         # ── Handle inline keyboard callback queries ────────────
         elif "callback_query" in update:
@@ -75,7 +87,9 @@ def webhook():
             answer_callback(cq["id"])
 
             logger.info(f"CALLBACK from {chat_id}: {data}")
-            process_message(chat_id, username, data)
+            threading.Thread(
+                target=_safe_process, args=(chat_id, username, data), daemon=True
+            ).start()
 
     except Exception as e:
         logger.exception(f"Webhook error: {e}")
@@ -99,7 +113,10 @@ def webhook_info():
 
 @app.route("/recovery/run", methods=["POST"])
 def run_recovery():
-    """Manually trigger the recovery scan (also called by scheduler)."""
+    """Manually trigger the recovery scan. Requires RECOVERY_SECRET header."""
+    secret = os.getenv("RECOVERY_SECRET", "")
+    if secret and request.headers.get("X-Recovery-Secret") != secret:
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
     from engine.recovery import run_recovery_scan
     processed = run_recovery_scan()
     return jsonify({"ok": True, "leads_processed": processed})

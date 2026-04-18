@@ -42,8 +42,8 @@ CLAUDE_MODEL       = "claude-3-5-sonnet-20241022"
 TYPING_DELAY_SECS  = 3
 
 # ─── LINKS ────────────────────────────────────────────────────
-VSL_LINK     = os.getenv("VSL_LINK",     "https://phantomai.com/vsl")      # replace with real
-WEBINAR_LINK = os.getenv("WEBINAR_LINK", "https://phantomai.com/webinar")  # replace with real
+VSL_LINK     = os.getenv("VSL_LINK",     "https://phantomai.eu/vsl")        # set VSL_LINK in .env
+WEBINAR_LINK = os.getenv("WEBINAR_LINK", "https://phantomai.eu/webinar/")  # confirmed in Master Brain PDF
 
 # ─── TIMING ───────────────────────────────────────────────────
 NUDGE_HOURS         = 2       # Send short nudge after 2h silence
