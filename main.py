@@ -123,7 +123,6 @@ def run_recovery():
 
 
 # ─── ENTRY POINT ─────────────────────────────────────────────
-if __name__ == "__main__":
-    port = int(os.getenv("PORT", 5000))
-    logger.info(f"🚀 Zee bot starting on port {port}")
-    app.run(host="0.0.0.0", port=port, debug=False)
+port = int(os.getenv("PORT", 8080))
+print(f"🚀 Zee bot starting on port {port}")
+app.run(host="0.0.0.0", port=port)
