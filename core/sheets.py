@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.settings import SHEET_URL, LEADS_TAB, LOG_TAB, COL
 
-from gumcp_client import Client
+from gumloop_client import Client
 
 
 def get_client():
